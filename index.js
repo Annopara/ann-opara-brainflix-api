@@ -1,9 +1,11 @@
 const express = require("express");
 const app = express();
-// const userData = require("./data/users.json");
+
+app.use(express.json());
+
 const videoitemRoute = require("./routes/videos");
 
-// const videoitemData = require("./data/videos.json");
+// app.use('/pitchers', express.static('pitchers'));
 
 app.use("/videos", videoitemRoute);
 

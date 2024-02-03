@@ -1,35 +1,56 @@
 const express = require("express");
 const router = express.Router();
-const fs = require("fs");
+const { v4: uuidv4 } = require("uuid");
 
-router.get("/", (_req, res) => {
-  const listVideosJson = JSON.parse(fs.readFileSync(`./data/videos.json`));
+const { fetchMovies, addMovie } = require("../controllers/videos");
 
-  const allVideoList = listVideosJson.map((videoitem) => ({
-    id: videoitem.id,
-    title: videoitem.title,
-    channel: videoitem.channel,
-    image: videoitem.image,
-  }));
+router
+  .route("/")
+  .get((_req, res) => {
+    const listVideosJson = fetchMovies();
 
-  res.json(allVideoList);
+    const allVideoList = listVideosJson.map((videoitem) => ({
+      id: videoitem.id,
+      title: videoitem.title,
+      channel: videoitem.channel,
+      image: videoitem.image,
+    }));
+
+    res.json(allVideoList);
+  })
+  .post((req, res) => {
+    console.log(req.body);
+    const userData = fetchMovies();
+    const { title, description } = req.body;
+    if (!title || !description)
+      return res
+        .status(400)
+        .json("All requests must have a title and a description.");
+    const newMovie = {
+      id: uuidv4(),
+      title: req.body.title,
+      channel: req.body.channel,
+      image: "../pitchers/default_img.jpg",
+      description: req.body.description,
+      views: 0,
+      likes: "0",
+      duration: "4:01",
+      video: "https://project-2-api.herokuapp.com/stream",
+      timestamp: Date.now(),
+      comments: [],
+    };
+
+    userData.push(newMovie);
+
+    const justAdded = addMovie(newMovie);
+    res.status(201).json(justAdded);
+  });
+
+router.route("/:id").get((req, res) => {
+  const { id } = req.params;
+  const movieMatch = fetchMovies().find((movie) => movie.id == id);
+  if (!movieMatch) return res.status(404).json("No movie with that ID");
+  res.status(200).json(movieMatch);
 });
-
-// router.post("/", (req, res) => {
-//   const body = req.body;
-//   const newCharacter = {
-//     id: uuidv4(),
-//     ...body,
-//   };
-
-//   const fileData = JSON.parse(fs.readFileSync(`./data/videos.json`));
-
-//   fs.writeFileSync(
-//     "./data/students.json",
-//     JSON.stringify([newCharacter, ...fileData])
-//   );
-
-//   return res.status(200).json(newCharacter);
-// });
 
 module.exports = router;
