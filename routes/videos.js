@@ -19,7 +19,6 @@ router
     res.json(allVideoList);
   })
   .post((req, res) => {
-    console.log(req.body);
     const userData = fetchMovies();
     const { title, description } = req.body;
     if (!title || !description)
@@ -29,8 +28,8 @@ router
     const newMovie = {
       id: uuidv4(),
       title: req.body.title,
-      channel: req.body.channel,
-      image: "../pitchers/default_img.jpg",
+      channel: "channel",
+      image: "http://localhost:8080/public/default_img.jpg",
       description: req.body.description,
       views: 0,
       likes: "0",
@@ -49,8 +48,31 @@ router
 router.route("/:id").get((req, res) => {
   const { id } = req.params;
   const movieMatch = fetchMovies().find((movie) => movie.id == id);
-  if (!movieMatch) return res.status(404).json("No movie with that ID");
+  if (!movieMatch) return res.status(404).json("No video with that ID");
   res.status(200).json(movieMatch);
+});
+
+router.route("/:id/comments").post((req, res) => {
+  const { id } = req.params;
+  const movieMatch = fetchMovies().find((movie) => movie.id == id);
+  if (!movieMatch) return res.status(404).json("No video with that ID");
+  if (!movieMatch.comments) {
+    movieMatch.comments = [];
+  }
+
+  const { comment, name } = req.body;
+  const newComment = {
+    id: uuidv4(),
+    name: name,
+    comment: comment,
+    likes: 0,
+    timestamp: Date.now(),
+  };
+  movieMatch.comments.push(newComment);
+
+  const justAdded = addMovie(movieMatch);
+
+  res.status(200).json(justAdded);
 });
 
 module.exports = router;
